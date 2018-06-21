@@ -63,6 +63,7 @@ def reset_password(info):
 
 ##### Function to reset the password when you forgot your old password. Only admin user will be able to run this
 def reset_password_by_admin(info):
+    db_name = "mysql"
     rds_instance,username,new_password = info.split()
     rds_host = dbs[rds_instance]
     try:
@@ -71,8 +72,9 @@ def reset_password_by_admin(info):
        logger.error("ERROR: Unexpected error: Could not connect to MySql instance.")
        sys.exit()
     with conn.cursor() as cur:
-        cur.execute("use mysql")
         cur.execute("update user set password=PASSWORD('%s') where User='%s'"%(new_password, username))
+        cur.execute("FLUSH PRIVILEGES")
+        conn.commit()
     return ("password of user %s changed successfully" % (username))
 
 def handler(event, context):
@@ -82,7 +84,10 @@ def handler(event, context):
     invoked_by = params['user_name'][0]
 
     if command == "reset_password":
-        reset_password_by_admin(info)
+        if invoked_by == "aditya.jangid":
+            reset_password_by_admin(info)
+        else:
+            reset_password(info)
 
     if command=="create_user" and invoked_by == "aditya.jangid":
         create_user(info)
