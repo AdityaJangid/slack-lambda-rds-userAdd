@@ -11,20 +11,26 @@ import cgi
 from base64 import b64decode
 dbs = {'info':'command-test.cj8hufhw12ic.us-east-1.rds.amazonaws.com', 'restricted':'command-test2.cj8hufhw12ic.us-east-1.rds.amazonaws.com'}
 
-enc_admin_name       =    os.environ["admin_name"]
-admin_name_inbyte           =    boto3.client('kms').decrypt(CiphertextBlob=b64decode(enc_admin_name))['Plaintext']
-admin_name = admin_name_inbyte.decode("utf-8")
+##### uncomment the following lines to take encrypted environmental variables from lambda function
+#  enc_admin_name           =    os.environ["admin_name"]
+#  admin_name_inbyte        =    boto3.client('kms').decrypt(CiphertextBlob=b64decode(enc_admin_name))['Plaintext']
+#  admin_name               =    admin_name_inbyte.decode("utf-8")
+#
+#  enc_admin_password       =    os.environ["admin_password"]
+#  admin_password_inbyte    =    boto3.client('kms').decrypt(CiphertextBlob=b64decode(enc_admin_password))['Plaintext']
+#  admin_password           =    admin_password_inbyte.decode("utf-8")
+#
 
-enc_admin_password   =    os.environ["admin_password"]
-admin_password_inbyte       =    boto3.client('kms').decrypt(CiphertextBlob=b64decode(enc_admin_password))['Plaintext']
-admin_password = admin_password_inbyte.decode("utf-8")
-
-db_name              =    "slack"
-prcnt                =    "%"
+##### Hard coded values for admin user and password
+admin_name               =    "aditya"
+admin_password           =    "aditya123"
+db_name                  =    "slack"
+prcnt                    =    "%"
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-#
+
+#### Function to create a user in mysql rds instance. Only admin user can run this
 def create_user(info):
     rds_instance,username,password,permission = info.split()
     rds_host = dbs[rds_instance]
@@ -41,6 +47,7 @@ def create_user(info):
        conn.commit()
     return ("user %s added successfully" % (username))
 
+##### Function to reset the password when you know your old password. Every user will be able to run this
 def reset_password(info):
     rds_instance,username,old_password,new_password = info.split()
     rds_host = dbs[rds_instance]
@@ -54,6 +61,7 @@ def reset_password(info):
        conn.commit()
     return ("password of user %s changed successfully" % (username))
 
+##### Function to reset the password when you forgot your old password. Only admin user will be able to run this
 def reset_password_by_admin(info):
     rds_instance,username,new_password = info.split()
     rds_host = dbs[rds_instance]
